@@ -30,15 +30,13 @@ Then make the following edits to your serverless.yaml file:
 ```yaml
 plugins:
   - serverless-log-forwarding
-
 custom:
   logForwarding:
-    destinationARN: '[ARN of Lambda Function to forward logs to]'
+    destinationARN: 'arn:aws:lambda:some:lambda'
     # optional:
-    filterPattern: '[filter pattern for logs that are sent to Lambda function]'
+    filterPattern: 'ERROR'
     stages:
-      - '[name of the stage to apply log forwarding]'
-      - '[another stage name to filter]'
+      - 'prod'
 ```
 
 ## Running Tests
