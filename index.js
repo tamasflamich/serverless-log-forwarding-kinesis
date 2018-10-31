@@ -23,8 +23,8 @@ class LogForwardingPlugin {
     const stage = this.options.stage && this.options.stage.length > 0
       ? this.options.stage
       : service.provider.stage;
-    if (service.custom.logForwarding.stages &&
-      service.custom.logForwarding.stages.indexOf(stage) === -1) {
+    if (service.custom.logForwardingKinesis.stages &&
+      service.custom.logForwardingKinesis.stages.indexOf(stage) === -1) {
       this.serverless.cli.log(`Log Forwarding is ignored for ${stage} stage`);
       return;
     }
@@ -49,38 +49,28 @@ class LogForwardingPlugin {
   createResourcesObj() {
     const service = this.serverless.service;
     // Checks if the serverless file is setup correctly
-    if (service.custom.logForwarding.destinationARN == null) {
-      throw new Error('Serverless-log-forwarding is not configured correctly. Please see README for proper setup.');
+    if (service.custom.logForwardingKinesis.destinationARN == null || service.custom.logForwardingKinesis.roleARN == null) {
+      throw new Error('Serverless-log-forwarding-kinesis is not configured correctly. Please see README for proper setup.');
     }
-    const filterPattern = service.custom.logForwarding.filterPattern || '';
-    const normalizedFilterID = !(service.custom.logForwarding.normalizedFilterID === false);
+    const filterPattern = service.custom.logForwardingKinesis.filterPattern || '';
+    const normalizedFilterID = !(service.custom.logForwardingKinesis.normalizedFilterID === false);
     // Get options and parameters to make resources object
-    const arn = service.custom.logForwarding.destinationARN;
-    // Get list of all functions in this lambda
-    const principal = `logs.${service.provider.region}.amazonaws.com`;
-    // Generate resources object for each function
-    // Only one lambda permission is needed
-    const resourceObj = {
-      LogForwardingLambdaPermission: {
-        Type: 'AWS::Lambda::Permission',
-        Properties: {
-          FunctionName: arn,
-          Action: 'lambda:InvokeFunction',
-          Principal: principal,
-        },
-      },
-    };
+    const arn = service.custom.logForwardingKinesis.destinationARN;
+    const roleArn = service.custom.logForwardingKinesis.roleARN;
+
     /* get list of all functions in this lambda
-      and filter by those which explicitly declare logForwarding.enabled = false
+      and filter by those which explicitly declare logForwardingKinesis.enabled = false
     */
+    const resourceObj = {};
     _.keys(service.functions)
       .filter((func) => {
-        const { logForwarding = {} } = this.serverless.service.getFunction(func);
-        return typeof logForwarding.enabled === 'undefined' || logForwarding.enabled === true;
+        const { logForwardingKinesis = {} } = this.serverless.service.getFunction(func);
+        return typeof logForwardingKinesis.enabled === 'undefined' || logForwardingKinesis.enabled === true;
       })
       .forEach((func) => {
         const subscriptionFilter = this.makeSubscriptionFilter(func, {
           arn,
+          roleArn,
           filterPattern,
           normalizedFilterID,
         });
@@ -94,7 +84,7 @@ class LogForwardingPlugin {
    * Makes a Subscription Filter object for given function name
    * @param  {String} functionName name of function to make SubscriptionFilter for
    * @param  {Object} options with
-   *                          arn: arn of the lambda to forward to
+   *                          arn: arn of the kinesis stream to forward to
    *                          filterPattern: filter pattern for the Subscription
    *                          normalizedFilterID: whether to use normalized FuncName as filter ID
    * @return {Object}               SubscriptionFilter
@@ -112,11 +102,11 @@ class LogForwardingPlugin {
       Type: 'AWS::Logs::SubscriptionFilter',
       Properties: {
         DestinationArn: options.arn,
-        FilterPattern: options.filterPattern,
+        RoleArn: options.roleArn,
+        FilterPattern: options.filterPattern, // '[timestamp=*Z, request_id="*-*", event]'
         LogGroupName: logGroupName,
       },
       DependsOn: [
-        'LogForwardingLambdaPermission',
         functionLogGroupId,
       ],
     };

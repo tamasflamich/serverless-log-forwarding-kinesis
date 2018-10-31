@@ -1,4 +1,4 @@
-# serverless-log-forwarding
+# serverless-log-forwarding-kinesis
 
 [![serverless](http://public.serverless.com/badges/v3.svg)](http://www.serverless.com)
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/amplify-education/serverless-domain-manager/master/LICENSE)
@@ -7,40 +7,72 @@
 [![npm version](https://badge.fury.io/js/serverless-log-forwarding.svg)](https://badge.fury.io/js/serverless-log-forwarding)
 [![npm downloads](https://img.shields.io/npm/dt/serverless-log-forwarding.svg?style=flat)](https://www.npmjs.com/package/serverless-log-forwarding)
 
-Serverless plugin for forwarding CloudWatch logs to another Lambda function.
-
-# About Amplify
-
-Amplify builds innovative and compelling digital educational products that empower teachers and students across the country. We have a long history as the leading innovator in K-12 education - and have been described as the best tech company in education and the best education company in tech. While others try to shrink the learning experience into the technology, we use technology to expand what is possible in real classrooms with real students and teachers.
+Serverless plugin for forwarding CloudWatch logs to a Kinesis Stream
 
 # Getting Started
 
 ## Prerequisites
+
+**This plugin only works for Serverless deployments to AWS**
 
 Make sure you have the following installed before starting:
 * [nodejs](https://nodejs.org/en/download/)
 * [npm](https://www.npmjs.com/get-npm)
 * [serverless](https://serverless.com/framework/docs/providers/aws/guide/installation/)
 
+You will need a Kinesis Stream ARN, and the ARN to a role with a policy like:
+
+```yaml
+CloudWatchLogsRole:
+  Type: AWS::IAM::Role
+  Properties:
+    AssumeRolePolicyDocument:
+      Version: "2012-10-17"
+      Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+              - logs.amazonaws.com
+          Action:
+            - sts:AssumeRole
+    Policies:
+      - PolicyName: root
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Action:
+                - kinesis:PutRecords
+                - kinesis:PutRecord
+              Resource:
+                Fn::GetAtt:
+                  - KinesisStream
+                  - Arn
+    RoleName: kinesis-forwarder-cloudwatchrole
+```
+
+Note the above is just an example cloudformation resource, and you will need to create one appropriate for your use case.
+
 ## Installing
 
 To install the plugin, run:
 
 ```shell
-npm install serverless-log-forwarding
+npm install serverless-log-forwarding-kinesis
 ```
 
 Then make the following edits to your `serverless.yaml` file:
 
 ```yaml
 plugins:
-  - serverless-log-forwarding
+  - serverless-log-forwarding-kinesis
 
 custom:
-  logForwarding:
-    destinationARN: '[ARN of Lambda Function to forward logs to]'
+  logForwardingKinesis:
+    destinationARN: '[ARN of Kinesis stream to forward logs to]'
+    roleARN: '[ARN of the role to use when forwading logs]'
     # optional:
-    filterPattern: '[filter pattern for logs that are sent to Lambda function]'
+    filterPattern: '[filter pattern for logs that are sent to Kinesis]'
     normalizedFilterID: true # whether to use normalized function name as filter ID
     stages:
       - '[name of the stage to apply log forwarding]'
@@ -66,7 +98,7 @@ npm test
 
 All tests should pass.
 
-If there is an error update the node_module inside the serverless-log-forwarding folder:
+If there is an error update the node_module inside the serverless-log-forwarding-kinesis folder:
 
 ```shell
 npm install
@@ -83,7 +115,6 @@ serverless deploy
 # Responsible Disclosure
 
 If you have any security issue to report, contact project maintainers privately.
-You can reach us at <github@amplify.com>
 
 # Contributing
 

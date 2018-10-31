@@ -4,18 +4,22 @@ const LogForwardingPlugin = require('../index.js');
 const expect = chai.expect;
 
 const correctConfig = {
-  destinationARN: 'arn:aws:lambda:us-moon-1:314159265358:function:testforward-test-forward',
+  destinationARN: 'arn:aws:lambda:us-moon-1:314159265358:stream:testforward-test-forward',
+  roleARN: 'arn:aws:iam:us-moon-1:314159265358:role/testforward-cloudwatch-role'
 };
 const correctConfigFromParam = {
-  destinationARN: 'arn:aws:lambda:us-moon-1:314159265358:function:testforward-dev-forward',
+  destinationARN: 'arn:aws:lambda:us-moon-1:314159265358:stream:testforward-dev-forward',
+  roleARN: 'arn:aws:iam:us-moon-1:314159265358:role/testforward-cloudwatch-role'
 };
 const correctConfigWithFilterPattern = {
-  destinationARN: 'arn:aws:lambda:us-moon-1:314159265358:function:testforward-test-forward',
+  destinationARN: 'arn:aws:lambda:us-moon-1:314159265358:stream:testforward-test-forward',
+  roleARN: 'arn:aws:iam:us-moon-1:314159265358:role/testforward-cloudwatch-role',
   filterPattern: 'Test Pattern',
   normalizedFilterID: false,
 };
 const correctConfigWithStageFilter = {
-  destinationARN: 'arn:aws:lambda:us-moon-1:314159265358:function:testforward-test-forward',
+  destinationARN: 'arn:aws:lambda:us-moon-1:314159265358:stream:testforward-test-forward',
+  roleARN: 'arn:aws:iam:us-moon-1:314159265358:role/testforward-cloudwatch-role',
   filterPattern: 'Test Pattern',
   stages: ['production'],
 };
@@ -35,7 +39,7 @@ const createServerless = (options, service) => {
   return serverless;
 };
 
-const constructPluginResources = (logForwarding, functions) => {
+const constructPluginResources = (logForwardingKinesis, functions) => {
   const options = {};
   const serverless = createServerless(options, {
     provider: {
@@ -43,7 +47,7 @@ const constructPluginResources = (logForwarding, functions) => {
       stage: 'test-stage',
     },
     custom: {
-      logForwarding,
+      logForwardingKinesis,
     },
     resources: {
       Resources: {
@@ -63,7 +67,7 @@ const constructPluginResources = (logForwarding, functions) => {
   });
   return new LogForwardingPlugin(serverless, options);
 };
-const constructPluginNoResources = (logForwarding) => {
+const constructPluginNoResources = (logForwardingKinesis) => {
   const options = {};
   const serverless = createServerless(options, {
     provider: {
@@ -71,7 +75,7 @@ const constructPluginNoResources = (logForwarding) => {
       stage: 'test-stage',
     },
     custom: {
-      logForwarding,
+      logForwardingKinesis,
     },
     functions: {
       testFunctionOne: {
@@ -85,7 +89,7 @@ const constructPluginNoResources = (logForwarding) => {
   return new LogForwardingPlugin(serverless, options);
 };
 
-const constructPluginResourcesWithParam = (logForwarding) => {
+const constructPluginResourcesWithParam = (logForwardingKinesis) => {
   const options = { stage: 'dev' };
   const serverless = createServerless(options, {
     provider: {
@@ -93,7 +97,7 @@ const constructPluginResourcesWithParam = (logForwarding) => {
       stage: 'test-stage',
     },
     custom: {
-      logForwarding,
+      logForwardingKinesis,
     },
     resources: {
       Resources: {
@@ -122,35 +126,27 @@ describe('Given a serverless config', () => {
         TestExistingFilter: {
           Type: 'AWS:Test:Filter',
         },
-        LogForwardingLambdaPermission: {
-          Type: 'AWS::Lambda::Permission',
-          Properties: {
-            FunctionName: 'arn:aws:lambda:us-moon-1:314159265358:function:testforward-test-forward',
-            Action: 'lambda:InvokeFunction',
-            Principal: 'logs.us-moon-1.amazonaws.com',
-          },
-        },
         SubscriptionFilterTestFunctionOne: {
           Type: 'AWS::Logs::SubscriptionFilter',
           Properties: {
-            DestinationArn: 'arn:aws:lambda:us-moon-1:314159265358:function:testforward-test-forward',
+            DestinationArn: 'arn:aws:lambda:us-moon-1:314159265358:stream:testforward-test-forward',
+            RoleArn: 'arn:aws:iam:us-moon-1:314159265358:role/testforward-cloudwatch-role',
             FilterPattern: '',
             LogGroupName: '/aws/lambda/test-service-test-stage-testFunctionOne',
           },
           DependsOn: [
-            'LogForwardingLambdaPermission',
             'TestFunctionOneLogGroup',
           ],
         },
         SubscriptionFilterTestFunctionTwo: {
           Type: 'AWS::Logs::SubscriptionFilter',
           Properties: {
-            DestinationArn: 'arn:aws:lambda:us-moon-1:314159265358:function:testforward-test-forward',
+            DestinationArn: 'arn:aws:lambda:us-moon-1:314159265358:stream:testforward-test-forward',
+            RoleArn: 'arn:aws:iam:us-moon-1:314159265358:role/testforward-cloudwatch-role',
             FilterPattern: '',
             LogGroupName: '/aws/lambda/test-service-test-stage-testFunctionTwo',
           },
           DependsOn: [
-            'LogForwardingLambdaPermission',
             'TestFunctionTwoLogGroup',
           ],
         },
@@ -166,35 +162,27 @@ describe('Given a serverless config', () => {
         TestExistingFilter: {
           Type: 'AWS:Test:Filter',
         },
-        LogForwardingLambdaPermission: {
-          Type: 'AWS::Lambda::Permission',
-          Properties: {
-            FunctionName: 'arn:aws:lambda:us-moon-1:314159265358:function:testforward-dev-forward',
-            Action: 'lambda:InvokeFunction',
-            Principal: 'logs.us-moon-1.amazonaws.com',
-          },
-        },
         SubscriptionFilterTestFunctionOne: {
           Type: 'AWS::Logs::SubscriptionFilter',
           Properties: {
-            DestinationArn: 'arn:aws:lambda:us-moon-1:314159265358:function:testforward-dev-forward',
+            DestinationArn: 'arn:aws:lambda:us-moon-1:314159265358:stream:testforward-dev-forward',
+            RoleArn: 'arn:aws:iam:us-moon-1:314159265358:role/testforward-cloudwatch-role',
             FilterPattern: '',
             LogGroupName: '/aws/lambda/test-service-dev-testFunctionOne',
           },
           DependsOn: [
-            'LogForwardingLambdaPermission',
             'TestFunctionOneLogGroup',
           ],
         },
         SubscriptionFilterTestFunctionTwo: {
           Type: 'AWS::Logs::SubscriptionFilter',
           Properties: {
-            DestinationArn: 'arn:aws:lambda:us-moon-1:314159265358:function:testforward-dev-forward',
+            DestinationArn: 'arn:aws:lambda:us-moon-1:314159265358:stream:testforward-dev-forward',
+            RoleArn: 'arn:aws:iam:us-moon-1:314159265358:role/testforward-cloudwatch-role',
             FilterPattern: '',
             LogGroupName: '/aws/lambda/test-service-dev-testFunctionTwo',
           },
           DependsOn: [
-            'LogForwardingLambdaPermission',
             'TestFunctionTwoLogGroup',
           ],
         },
@@ -207,35 +195,27 @@ describe('Given a serverless config', () => {
     const plugin = constructPluginNoResources(correctConfig);
     const expectedResources = {
       Resources: {
-        LogForwardingLambdaPermission: {
-          Type: 'AWS::Lambda::Permission',
-          Properties: {
-            FunctionName: 'arn:aws:lambda:us-moon-1:314159265358:function:testforward-test-forward',
-            Action: 'lambda:InvokeFunction',
-            Principal: 'logs.us-moon-1.amazonaws.com',
-          },
-        },
         SubscriptionFilterTestFunctionOne: {
           Type: 'AWS::Logs::SubscriptionFilter',
           Properties: {
-            DestinationArn: 'arn:aws:lambda:us-moon-1:314159265358:function:testforward-test-forward',
+            DestinationArn: 'arn:aws:lambda:us-moon-1:314159265358:stream:testforward-test-forward',
+            RoleArn: 'arn:aws:iam:us-moon-1:314159265358:role/testforward-cloudwatch-role',
             FilterPattern: '',
             LogGroupName: '/aws/lambda/test-service-test-stage-testFunctionOne',
           },
           DependsOn: [
-            'LogForwardingLambdaPermission',
             'TestFunctionOneLogGroup',
           ],
         },
         SubscriptionFilterTestFunctionTwo: {
           Type: 'AWS::Logs::SubscriptionFilter',
           Properties: {
-            DestinationArn: 'arn:aws:lambda:us-moon-1:314159265358:function:testforward-test-forward',
+            DestinationArn: 'arn:aws:lambda:us-moon-1:314159265358:stream:testforward-test-forward',
+            RoleArn: 'arn:aws:iam:us-moon-1:314159265358:role/testforward-cloudwatch-role',
             FilterPattern: '',
             LogGroupName: '/aws/lambda/test-service-test-stage-testFunctionTwo',
           },
           DependsOn: [
-            'LogForwardingLambdaPermission',
             'TestFunctionTwoLogGroup',
           ],
         },
@@ -251,35 +231,27 @@ describe('Given a serverless config', () => {
         TestExistingFilter: {
           Type: 'AWS:Test:Filter',
         },
-        LogForwardingLambdaPermission: {
-          Type: 'AWS::Lambda::Permission',
-          Properties: {
-            FunctionName: 'arn:aws:lambda:us-moon-1:314159265358:function:testforward-test-forward',
-            Action: 'lambda:InvokeFunction',
-            Principal: 'logs.us-moon-1.amazonaws.com',
-          },
-        },
         SubscriptionFiltertestFunctionOne: {
           Type: 'AWS::Logs::SubscriptionFilter',
           Properties: {
-            DestinationArn: 'arn:aws:lambda:us-moon-1:314159265358:function:testforward-test-forward',
+            DestinationArn: 'arn:aws:lambda:us-moon-1:314159265358:stream:testforward-test-forward',
+            RoleArn: 'arn:aws:iam:us-moon-1:314159265358:role/testforward-cloudwatch-role',
             FilterPattern: 'Test Pattern',
             LogGroupName: '/aws/lambda/test-service-test-stage-testFunctionOne',
           },
           DependsOn: [
-            'LogForwardingLambdaPermission',
             'TestFunctionOneLogGroup',
           ],
         },
         SubscriptionFiltertestFunctionTwo: {
           Type: 'AWS::Logs::SubscriptionFilter',
           Properties: {
-            DestinationArn: 'arn:aws:lambda:us-moon-1:314159265358:function:testforward-test-forward',
+            DestinationArn: 'arn:aws:lambda:us-moon-1:314159265358:stream:testforward-test-forward',
+            RoleArn: 'arn:aws:iam:us-moon-1:314159265358:role/testforward-cloudwatch-role',
             FilterPattern: 'Test Pattern',
             LogGroupName: '/aws/lambda/test-service-test-stage-testFunctionTwo',
           },
           DependsOn: [
-            'LogForwardingLambdaPermission',
             'TestFunctionTwoLogGroup',
           ],
         },
@@ -289,7 +261,7 @@ describe('Given a serverless config', () => {
     expect(plugin.serverless.service.resources).to.eql(expectedResources);
   });
 
-  it('excludes functions with logForwarding.enabled=false from AWS::Logs::SubscriptionFilter output', () => {
+  it('excludes functions with logForwardingKinesis.enabled=false from AWS::Logs::SubscriptionFilter output', () => {
     const plugin = constructPluginResources(correctConfigWithFilterPattern, {
       testFunctionOne: {
       },
@@ -297,12 +269,12 @@ describe('Given a serverless config', () => {
         logForwarding: {},
       },
       testFunctionThree: {
-        logForwarding: {
+        logForwardingKinesis: {
           enabled: true,
         },
       },
       testFunctionFour: {
-        logForwarding: {
+        logForwardingKinesis: {
           enabled: false,
         },
       },
@@ -312,47 +284,39 @@ describe('Given a serverless config', () => {
         TestExistingFilter: {
           Type: 'AWS:Test:Filter',
         },
-        LogForwardingLambdaPermission: {
-          Type: 'AWS::Lambda::Permission',
-          Properties: {
-            FunctionName: 'arn:aws:lambda:us-moon-1:314159265358:function:testforward-test-forward',
-            Action: 'lambda:InvokeFunction',
-            Principal: 'logs.us-moon-1.amazonaws.com',
-          },
-        },
         SubscriptionFiltertestFunctionOne: {
           Type: 'AWS::Logs::SubscriptionFilter',
           Properties: {
-            DestinationArn: 'arn:aws:lambda:us-moon-1:314159265358:function:testforward-test-forward',
+            DestinationArn: 'arn:aws:lambda:us-moon-1:314159265358:stream:testforward-test-forward',
+            RoleArn: 'arn:aws:iam:us-moon-1:314159265358:role/testforward-cloudwatch-role',
             FilterPattern: 'Test Pattern',
             LogGroupName: '/aws/lambda/test-service-test-stage-testFunctionOne',
           },
           DependsOn: [
-            'LogForwardingLambdaPermission',
             'TestFunctionOneLogGroup',
           ],
         },
         SubscriptionFiltertestFunctionTwo: {
           Type: 'AWS::Logs::SubscriptionFilter',
           Properties: {
-            DestinationArn: 'arn:aws:lambda:us-moon-1:314159265358:function:testforward-test-forward',
+            DestinationArn: 'arn:aws:lambda:us-moon-1:314159265358:stream:testforward-test-forward',
+            RoleArn: 'arn:aws:iam:us-moon-1:314159265358:role/testforward-cloudwatch-role',
             FilterPattern: 'Test Pattern',
             LogGroupName: '/aws/lambda/test-service-test-stage-testFunctionTwo',
           },
           DependsOn: [
-            'LogForwardingLambdaPermission',
             'TestFunctionTwoLogGroup',
           ],
         },
         SubscriptionFiltertestFunctionThree: {
           Type: 'AWS::Logs::SubscriptionFilter',
           Properties: {
-            DestinationArn: 'arn:aws:lambda:us-moon-1:314159265358:function:testforward-test-forward',
+            DestinationArn: 'arn:aws:lambda:us-moon-1:314159265358:stream:testforward-test-forward',
+            RoleArn: 'arn:aws:iam:us-moon-1:314159265358:role/testforward-cloudwatch-role',
             FilterPattern: 'Test Pattern',
             LogGroupName: '/aws/lambda/test-service-test-stage-testFunctionThree',
           },
           DependsOn: [
-            'LogForwardingLambdaPermission',
             'TestFunctionThreeLogGroup',
           ],
         },
@@ -380,7 +344,7 @@ describe('Catching errors in serverless config ', () => {
   it('missing custom log forwarding options', () => {
     const emptyConfig = {};
     const plugin = constructPluginResources(emptyConfig);
-    const expectedError = 'Serverless-log-forwarding is not configured correctly. Please see README for proper setup.';
+    const expectedError = 'Serverless-log-forwarding-kinesis is not configured correctly. Please see README for proper setup.';
     expect(plugin.updateResources.bind(plugin)).to.throw(expectedError);
   });
 });

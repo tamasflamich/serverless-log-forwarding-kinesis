@@ -1,7 +1,7 @@
 {
-  "name": "serverless-log-forwarding",
+  "name": "serverless-log-forwarding-kinesis",
   "version": "1.2.1",
-  "description": "a serverless plugin to forward logs to given lambda function",
+  "description": "a serverless plugin to forward logs to given kinesis stream",
   "main": "index.js",
   "directories": {
     "test": "test"
@@ -26,7 +26,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/amplify-education/serverless-log-forwarding.git"
+    "url": "git+https://github.com/nason/serverless-log-forwarding-kinesis.git"
   },
   "keywords": [
     "serverless",
@@ -34,10 +34,9 @@
     "plugin",
     "logs"
   ],
-  "author": "Amplify Education",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/amplify-education/serverless-log-forwarding/issues"
+    "url": "https://github.com/nason/serverless-log-forwarding-kinesis/issues"
   },
-  "homepage": "https://github.com/amplify-education/serverless-log-forwarding#readme"
+  "homepage": "https://github.com/nason/serverless-log-forwarding-kinesis#readme"
 }
