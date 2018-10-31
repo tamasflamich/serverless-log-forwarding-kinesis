@@ -1,6 +1,6 @@
 {
   "name": "serverless-log-forwarding-kinesis",
-  "version": "1.2.1",
+  "version": "0.1.0",
   "description": "a serverless plugin to forward logs to given kinesis stream",
   "main": "index.js",
   "directories": {
