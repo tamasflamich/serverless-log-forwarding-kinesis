@@ -1,11 +1,10 @@
 # serverless-log-forwarding-kinesis
 
 [![serverless](http://public.serverless.com/badges/v3.svg)](http://www.serverless.com)
-[![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/amplify-education/serverless-domain-manager/master/LICENSE)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/bb1e50c048434012bd57eb73225a089e)](https://www.codacy.com/app/CFER/serverless-log-forwarding?utm_source=github.com&utm_medium=referral&utm_content=amplify-education/serverless-log-forwarding&utm_campaign=badger)
-[![Build Status](https://travis-ci.org/amplify-education/serverless-log-forwarding.svg?branch=master)](https://travis-ci.org/amplify-education/serverless-log-forwarding)
-[![npm version](https://badge.fury.io/js/serverless-log-forwarding.svg)](https://badge.fury.io/js/serverless-log-forwarding)
-[![npm downloads](https://img.shields.io/npm/dt/serverless-log-forwarding.svg?style=flat)](https://www.npmjs.com/package/serverless-log-forwarding)
+[![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/nason/serverless-log-forwarding-kinesis/master/LICENSE)
+[![Build Status](https://travis-ci.org/nason/serverless-log-forwarding-kinesis.svg?branch=master)](https://travis-ci.org/nason/serverless-log-forwarding-kinesis)
+[![npm version](https://badge.fury.io/js/serverless-log-forwarding-kinesis.svg)](https://badge.fury.io/js/serverless-log-forwarding-kinesis)
+[![npm downloads](https://img.shields.io/npm/dt/serverless-log-forwarding-kinesis.svg?style=flat)](https://www.npmjs.com/package/serverless-log-forwarding-kinesis)
 
 Serverless plugin for forwarding CloudWatch logs to a Kinesis Stream
 
