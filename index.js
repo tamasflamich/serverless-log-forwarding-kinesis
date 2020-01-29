@@ -23,6 +23,10 @@ class LogForwardingPlugin {
     const stage = this.options.stage && this.options.stage.length > 0
       ? this.options.stage
       : service.provider.stage;
+    if (!service.custom.logForwardingKinesis) {
+      this.serverless.cli.log('"custom.logForwardingKinesis" cannot be found, disabling log forwarding');
+      return;
+    }
     if (service.custom.logForwardingKinesis.stages &&
       service.custom.logForwardingKinesis.stages.indexOf(stage) === -1) {
       this.serverless.cli.log(`Log Forwarding is ignored for ${stage} stage`);
